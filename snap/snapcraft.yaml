@@ -1,0 +1,83 @@
+# Deeply inspired by bitcoin-core team packaging : https://github.com/bitcoin-core/packaging
+name: namecoin-core
+version: 0.21.0.1
+base: core18
+summary: Bitcoin frees money - Namecoin frees DNS, identities and other technologies.
+description: |
+  Namecoin is an experimental open-source technology which improves decentralization, security, censorship resistance, privacy, and speed of certain components of the Internet infrastructure such as DNS and identities.
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: arm64
+  - build-on: armhf
+  - build-on: amd64
+
+apps:
+  daemon:
+    command: namecoind
+    plugs: [home, removable-media, network, network-bind]
+    environment:
+      # Override HOME so the datadir is located at
+      # ~/snap/namecoin-core/common/.namecoin/ instead of
+      # ~/snap/namecoin-core/current/.namecoin/, and each new version of the
+      # snap won't have a different data directory:
+      # https://docs.snapcraft.io/environment-variables/7983
+      HOME: $SNAP_USER_COMMON
+  qt:
+    command: desktop-launch namecoin-qt
+    plugs: [home, removable-media, network, network-bind, desktop, x11, unity7]
+    environment:
+      HOME: $SNAP_USER_COMMON
+      DISABLE_WAYLAND: 1
+  cli:
+    command: namecoin-cli
+    plugs: [home, removable-media, network]
+    environment:
+      HOME: $SNAP_USER_COMMON
+
+parts:
+  namecoin-core:
+    plugin: nil
+    override-build: | 
+      env | grep SNAP
+      wget https://www.namecoin.org/files/namecoin-core/namecoin-core-${SNAPCRAFT_PROJECT_VERSION}/namecoin-nc${SNAPCRAFT_PROJECT_VERSION}-${SNAPCRAFT_ARCH_TRIPLET}.tar.gz
+      tar -xvf namecoin-nc${SNAPCRAFT_PROJECT_VERSION}-${SNAPCRAFT_ARCH_TRIPLET}.tar.gz
+      echo "Running tests ..."
+      namecoin-nc${SNAPCRAFT_PROJECT_VERSION}/bin/test_namecoin
+      install -m 0755 -D -t $SNAPCRAFT_PART_INSTALL/bin namecoin-nc${SNAPCRAFT_PROJECT_VERSION}/bin/namecoind
+      install -m 0755 -D -t $SNAPCRAFT_PART_INSTALL/bin namecoin-nc${SNAPCRAFT_PROJECT_VERSION}/bin/namecoin-qt
+      install -m 0755 -D -t $SNAPCRAFT_PART_INSTALL/bin namecoin-nc${SNAPCRAFT_PROJECT_VERSION}/bin/namecoin-cli
+      wget https://www.namecoin.org/images/namecoin-coin_200px.png
+      install -m 0644 -D -t $SNAPCRAFT_PART_INSTALL/share/pixmaps namecoin-coin_200px.png
+    build-packages:
+      - wget
+    after:
+      - desktop-qt5
+
+
+  desktop-qt5:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: qt
+    plugin: make
+    make-parameters: ["FLAVOR=qt5"]
+    build-packages:
+      - build-essential
+      - qtbase5-dev
+      - dpkg-dev
+    stage-packages:
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libqt5gui5
+      - libgdk-pixbuf2.0-0
+      - libqt5svg5
+      - try: [appmenu-qt5]
+      - locales-all
+      - xdg-user-dirs
+      - fcitx-frontend-qt5

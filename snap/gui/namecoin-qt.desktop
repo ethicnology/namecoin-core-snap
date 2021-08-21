@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Namecoin Core
+Comment=Connect to the Namecoin P2P Network
+Exec=namecoin-core.qt %u
+Terminal=false
+Type=Application
+Icon=${SNAP}/share/pixmaps/namecoin-coin_200px.png
+MimeType=x-scheme-handler/namecoin;
+Categories=Office;DNS;Finance;P2P;Network;Qt;
+StartupWMClass=Namecoin-qt
